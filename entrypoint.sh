@@ -34,3 +34,5 @@ echo "$PG_URLS" | tr ',' '\n' | cut -d= -f1 | while read NAME; do
         aws s3 rm "s3://$S3_BUCKET/$OLD"
       done
 done
+
+echo "✅ Backup completed successfully at $(date '+%Y-%m-%d %H:%M:%S')"
