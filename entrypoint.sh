@@ -17,7 +17,7 @@ echo "$PG_URLS" | tr ',' '\n' | while IFS='=' read -r NAME URI; do
   ARCHIVE="/tmp/${NAME}_${DATE_HR}.tar.gz"
   tar -czf "$ARCHIVE" -C /tmp "${NAME}.dump" --remove-files
 
-  KEY="$NAME/$NAME_$DATE_HR.tar.gz"       # S3 prefix per DB
+  KEY="$NAME/${NAME}_${DATE_HR}.tar.gz"       # S3 prefix per DB
   echo "⤴ uploading $KEY"
   aws s3 cp "$ARCHIVE" "s3://$S3_BUCKET/$KEY"
 done
