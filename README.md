@@ -69,32 +69,74 @@ docker service scale maintenance_database-backup=1
 
 ### Scheduling Regular Backups
 
-To run backups automatically every 3 hours, you can use cron. Here's how to set it up:
+To run backups automatically, you'll need to set up a script on your Docker Swarm manager node. This script ensures proper execution by:
 
-1. Create a cron job on your Docker Swarm manager node:
+1. Scaling the service to 1 replica
+2. Waiting for the backup task to complete
+3. Scaling back down to 0 replicas
+
+Here's how to set it up:
+
+1. Create a script file (e.g., `/usr/local/bin/run-backup.sh`):
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ensure SERVICE_NAME is set
+if [ -z "${SERVICE_NAME:-}" ]; then
+  echo "❌ Error: SERVICE_NAME environment variable is not set."
+  echo "   Example: export SERVICE_NAME=database-backup"
+  exit 1
+fi
+
+# 1) Scale up to 1
+echo "🔼 Scaling ${SERVICE_NAME} up to 1 replica…"
+docker service scale "${SERVICE_NAME}=1"
+
+# 2) Wait for the task to exit (i.e. no tasks in RUNNING state)
+echo "⏳ Waiting for ${SERVICE_NAME} to finish…"
+while docker service ps "${SERVICE_NAME}" \
+        --filter "desired-state=running" \
+        --format '{{.ID}}' | grep -q .; do
+  sleep 2
+done
+
+# 3) Scale back to 0
+echo "🔽 Scaling ${SERVICE_NAME} back to 0 replicas…"
+docker service scale "${SERVICE_NAME}=0"
+
+echo "✅ ${SERVICE_NAME} has completed and been scaled down."
+```
+
+2. Make the script executable:
+
+```bash
+chmod +x /usr/local/bin/run-backup.sh
+```
+
+3. Create a cron job on your Docker Swarm manager node:
 
 ```bash
 # Edit crontab
 crontab -e
 ```
 
-2. Add the following line to run backups every 3 hours:
+4. Add the following line to run backups every 3 hours:
 
 ```bash
-0 */3 * * * docker service scale maintenance_database-backup=1
+# Set the service name (adjust according to your stack name)
+0 */3 * * * export SERVICE_NAME=maintenance_database-backup && /usr/local/bin/run-backup.sh >> /var/log/backup.log 2>&1
 ```
 
 This will:
 
 - Run at minute 0 of every 3rd hour (00:00, 03:00, 06:00, etc.)
-- Scale the backup service to 1 replica, triggering a backup
-- The service will automatically scale back to 0 after completion
+- Execute the backup script with the proper service name
+- Log output to `/var/log/backup.log`
+- The script ensures the service completes before scaling down
 
-Note: Make sure the cron daemon has access to the Docker socket. You might need to run the cron job as a user with Docker permissions or use `sudo`:
-
-```bash
-0 */3 * * * sudo docker service scale maintenance_database-backup=1
-```
+Note: Make sure the cron daemon has access to the Docker socket. You might need to run the cron job as a user with Docker permissions or use `sudo`.
 
 ## Security Notes
 
