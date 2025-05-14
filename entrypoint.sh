@@ -30,8 +30,8 @@ echo "$PG_URLS" | tr ',' '\n' | cut -d= -f1 | while read NAME; do
     | awk '{print $4}' | sort -r \
     | awk "NR>$BACKUPS_TO_KEEP" \
     | while read OLD; do
-        echo "  deleting $OLD"
-        aws s3 rm "s3://$S3_BUCKET/$OLD"
+        echo "  deleting $NAME/$OLD"
+        aws s3 rm "s3://$S3_BUCKET/$NAME/$OLD"
       done
 done
 
