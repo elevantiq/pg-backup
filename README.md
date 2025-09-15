@@ -18,7 +18,7 @@ Add the following service to your Docker Compose or stack file:
 
 ```yaml
 database-backup:
-  image: ghcr.io/dlhck/pg-backup:latest
+  image: elevantiq/pg-backup:latest
   environment:
     S3_BUCKET: "your-backup-bucket"
     AWS_ACCESS_KEY_ID: "your-access-key"
