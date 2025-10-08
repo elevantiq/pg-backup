@@ -15,6 +15,17 @@ jobs:
       contents: read
       packages: write
 
+    strategy:
+      matrix:
+        include:
+          - pg_version: "14"
+            alpine_version: "3.16"
+          - pg_version: "15"
+            alpine_version: "3.17"
+          - pg_version: "16"
+            alpine_version: "3.19"
+            latest: true
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,13 +42,16 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,format=short
+            type=raw,value=pg${{ matrix.pg_version }}
+            type=raw,value=latest,enable=${{ matrix.latest == true }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
+          build-args: |
+            ALPINE_VERSION=${{ matrix.alpine_version }}
+            PG_VERSION=${{ matrix.pg_version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
