@@ -2,9 +2,18 @@
 
 A Docker image for automated PostgreSQL database backups to AWS S3. This image is designed to be used as a service in Docker Swarm, allowing you to perform on-demand backups of multiple PostgreSQL databases.
 
+## Supported PostgreSQL Versions
+
+This image is available for PostgreSQL versions 14, 15, and 16:
+- `elevantiq/pg-backup:pg14` - PostgreSQL 14
+- `elevantiq/pg-backup:pg15` - PostgreSQL 15
+- `elevantiq/pg-backup:pg16` - PostgreSQL 16
+- `elevantiq/pg-backup:latest` - PostgreSQL 16 (default)
+
 ## Features
 
 - Backup multiple PostgreSQL databases in a single container
+- Support for PostgreSQL 14, 15, and 16
 - Automatic upload to AWS S3
 - Configurable via environment variables
 - Designed for Docker Swarm deployment
@@ -18,7 +27,7 @@ Add the following service to your Docker Compose or stack file:
 
 ```yaml
 database-backup:
-  image: elevantiq/pg-backup:latest
+  image: elevantiq/pg-backup:pg16  # or pg14, pg15, latest
   environment:
     S3_BUCKET: "your-backup-bucket"
     AWS_ACCESS_KEY_ID: "your-access-key"
